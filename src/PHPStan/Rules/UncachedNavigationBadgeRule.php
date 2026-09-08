@@ -35,7 +35,7 @@ final class UncachedNavigationBadgeRule implements Rule
 
         $class = $scope->getClassReflection();
 
-        if ($class === null || ! $class->isSubclassOf('Filament\Resources\Resource')) {
+        if ($class === null || ! $class->is('Filament\Resources\Resource')) {
             return [];
         }
 

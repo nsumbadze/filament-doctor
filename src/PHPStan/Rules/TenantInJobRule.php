@@ -53,7 +53,7 @@ final class TenantInJobRule implements Rule
         }
 
         foreach (self::QUEUED_PARENTS as $parent) {
-            if ($inClass->isSubclassOf($parent) || $inClass->implementsInterface($parent)) {
+            if ($inClass->is($parent) || $inClass->implementsInterface($parent)) {
                 return [
                     RuleErrorBuilder::message(sprintf(
                         'Filament::%s() is null inside %s (queued jobs, importers and exporters run outside the request). Pass the tenant explicitly.',
