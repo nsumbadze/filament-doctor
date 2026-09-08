@@ -1,0 +1,7 @@
+services:
+    -
+        class: Nsumbadze\Doctor\PHPStan\Rules\TenantInJobRule
+        tags: [phpstan.rules.rule]
+    -
+        class: Nsumbadze\Doctor\PHPStan\Rules\UncachedNavigationBadgeRule
+        tags: [phpstan.rules.rule]
