@@ -17,8 +17,8 @@ It runs two ways: `php artisan filament:doctor` boots each panel and inspects it
 
 ## Requirements
 
-- PHP 8.2+
-- Filament 4.x
+- PHP 8.2+ (8.3+ with Filament 5)
+- Filament 4.x or 5.x
 - PHPStan 2.x for the static rules (optional)
 
 ## Installation
@@ -70,7 +70,7 @@ php artisan filament:doctor                       # reports only what is not in 
 php artisan filament:doctor --no-baseline         # everything again
 ```
 
-Baseline entries are keyed by rule and subject, not by message, so wording changes between versions do not invalidate them.
+Baseline entries are keyed by rule and subject, not by message, so wording changes between versions do not invalidate them. File-based subjects are relative to the project root, so the baseline is portable between machines and CI.
 
 ## Rules
 
@@ -86,6 +86,8 @@ Baseline entries are keyed by rule and subject, not by message, so wording chang
 | [uncached-navigation-badge](docs/rules/uncached-navigation-badge.md) | warning | `getNavigationBadge()` querying without a cache |
 | [tenant-in-job](docs/rules/tenant-in-job.md) | error | `Filament::getTenant()` inside jobs, importers, exporters |
 | [import-transient-column](docs/rules/import-transient-column.md) | error | Importer columns that are not model attributes without a `fillRecord()` override |
+
+The file-scanning rules (`tenant-in-job`, `permission-name-drift`, `missing-translation-key`) read source line by line and skip comment lines; a mention inside a docblock is not reported. The same finding raised by several panels is reported once.
 
 Change a severity or switch a rule off in the config:
 
