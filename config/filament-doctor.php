@@ -53,6 +53,11 @@ return [
     'permissions' => null,
 
     /*
+    | Additional rule classes implementing Nsumbadze\Doctor\Contracts\Rule.
+    */
+    'extra_rules' => [],
+
+    /*
     | Baseline file: findings listed there are hidden from the report.
     */
     'baseline' => base_path('filament-doctor-baseline.json'),
