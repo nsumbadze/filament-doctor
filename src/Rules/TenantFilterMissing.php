@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Nsumbadze\Doctor\Rules;
 
 use Filament\Panel;
-use Illuminate\Database\Eloquent\Model;
 use Nsumbadze\Doctor\Support\Inspector;
 
 /**
@@ -43,10 +42,7 @@ class TenantFilterMissing extends AbstractRule
             $relationship = $resource::getTenantOwnershipRelationshipName();
             $model = $inspector->model($resource);
 
-            /** @var Model $instance */
-            $instance = new $model;
-
-            if (method_exists($instance, $relationship)) {
+            if (method_exists($inspector->instance($model), $relationship)) {
                 continue;
             }
 

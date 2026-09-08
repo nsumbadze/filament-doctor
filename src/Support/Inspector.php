@@ -34,6 +34,9 @@ class Inspector
     /** @var array<string, array<int, string>> */
     protected array $columnListings = [];
 
+    /** @var array<class-string<Model>, Model> */
+    protected array $instances = [];
+
     /**
      * @param  array<int, class-string>  $ignored
      */
@@ -219,8 +222,7 @@ class Inspector
      */
     public function isJsonAttribute(string $model, string $attribute): bool
     {
-        /** @var Model $instance */
-        $instance = new $model;
+        $instance = $this->instance($model);
 
         $cast = $instance->getCasts()[$attribute] ?? null;
 
@@ -259,8 +261,7 @@ class Inspector
             return null;
         }
 
-        /** @var Model $instance */
-        $instance = new $model;
+        $instance = $this->instance($model);
         $key = $instance->getConnectionName() . '.' . $instance->getTable();
 
         if (isset($this->columnListings[$key])) {
@@ -272,6 +273,16 @@ class Inspector
         } catch (Throwable) {
             return null;
         }
+    }
+
+    /**
+     * A throw-away model instance for metadata (table, casts, connection).
+     *
+     * @param  class-string<Model>  $model
+     */
+    public function instance(string $model): Model
+    {
+        return $this->instances[$model] ??= new $model;
     }
 
     /**
