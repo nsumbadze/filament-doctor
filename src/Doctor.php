@@ -26,6 +26,9 @@ use Throwable;
  */
 class Doctor
 {
+    /** @var array<string, true> panel ids booted by this process */
+    protected static array $booted = [];
+
     /** @var array<int, class-string<Rule>> */
     public const RULES = [
         TranslatableConcernMissing::class,
@@ -76,35 +79,57 @@ class Doctor
         /** @var array<int, class-string> $ignored */
         $ignored = (array) config('filament-doctor.ignore', []);
 
-        foreach ($this->panels($panelId) as $panel) {
-            Filament::setCurrentPanel($panel);
-            $panel->boot();
+        $previousPanel = Filament::getCurrentPanel();
+        $rules = $this->rules();
 
-            $inspector = new Inspector($panel, $useDatabase, $ignored);
+        try {
+            foreach ($this->panels($panelId) as $panel) {
+                Filament::setCurrentPanel($panel);
+                $this->bootOnce($panel);
 
-            foreach ($this->rules() as $rule) {
-                $severity = $this->severityOf($rule);
+                $inspector = new Inspector($panel, $useDatabase, $ignored);
 
-                if ($severity === Severity::Off) {
-                    continue;
-                }
+                foreach ($rules as $rule) {
+                    $severity = $this->severityOf($rule);
 
-                try {
-                    foreach ($rule->check($panel, $inspector) as $finding) {
-                        $findings[] = $finding->withSeverity($severity);
+                    if ($severity === Severity::Off) {
+                        continue;
                     }
-                } catch (Throwable $exception) {
-                    $findings[] = new Finding(
-                        $rule->id(),
-                        Severity::Warning,
-                        $rule->id() . '@' . $panel->getId(),
-                        "Rule could not run on panel \"{$panel->getId()}\": " . $exception->getMessage(),
-                    );
+
+                    try {
+                        foreach ($rule->check($panel, $inspector) as $finding) {
+                            $findings[] = $finding->withSeverity($severity);
+                        }
+                    } catch (Throwable $exception) {
+                        $findings[] = new Finding(
+                            $rule->id(),
+                            Severity::Warning,
+                            $rule->id() . '@' . $panel->getId(),
+                            "Rule could not run on panel \"{$panel->getId()}\": " . $exception->getMessage(),
+                        );
+                    }
                 }
             }
+        } finally {
+            Filament::setCurrentPanel($previousPanel);
         }
 
         return $this->unique($findings);
+    }
+
+    /**
+     * Panel::boot() registers plugins, hooks and tenancy scopes; running it a
+     * second time would register them twice.
+     */
+    protected function bootOnce(Panel $panel): void
+    {
+        if (isset(static::$booted[$panel->getId()])) {
+            return;
+        }
+
+        $panel->boot();
+
+        static::$booted[$panel->getId()] = true;
     }
 
     public function severityOf(Rule $rule): Severity
