@@ -1,25 +1,14 @@
 # Filament Doctor
 
-Health checks for Filament panels. Doctor reads your resources, forms, tables, policies, importers and jobs and tells you what will bite your users before they find it:
+An audit command and a set of PHPStan rules for Filament panels.
 
-- a translatable model whose Edit page forgot the `Translatable` concern and renders `[object Object]`,
-- a `->searchable()` on a JSON column that scans the whole table on every keystroke,
-- a resource with no policy, or a policy without `viewAny()` that silently hides the resource,
-- a resource on a tenant panel whose model has no tenant relationship,
-- translation keys that exist in no locale,
-- permission names your policies check that nobody ever creates,
-- relationship selects that load every row,
-- navigation badges that run `COUNT(*)` on every render,
-- `Filament::getTenant()` inside jobs, importers and exporters (always null there),
-- importer columns that are not real attributes and crash `fillRecord()`.
-
-It runs two ways: `php artisan filament:doctor` boots each panel and inspects it (the full rule set), and a PHPStan extension adds purely static rules to your existing analysis.
+`php artisan filament:doctor` boots each panel, inspects its resources, forms, tables, policies, importers and jobs, and reports problems that otherwise only show up in production. The PHPStan extension covers the subset of checks that can be made without booting the application.
 
 ## Requirements
 
-- PHP 8.2+ (8.3+ with Filament 5)
-- Filament 4.x or 5.x
-- PHPStan 2.x for the static rules (optional)
+- PHP 8.2 or newer (8.3 for Filament 5)
+- Filament 4 or 5
+- PHPStan 2 for the static rules (optional)
 
 ## Installation
 
@@ -27,32 +16,28 @@ It runs two ways: `php artisan filament:doctor` boots each panel and inspects it
 composer require --dev nsumbadze/filament-doctor
 ```
 
-Optionally publish the config:
+The config file can be published with `php artisan vendor:publish --tag=filament-doctor-config`.
+
+## Command
 
 ```bash
-php artisan vendor:publish --tag=filament-doctor-config
+php artisan filament:doctor                 # all panels
+php artisan filament:doctor --panel=admin
+php artisan filament:doctor --format=json
+php artisan filament:doctor --format=github # GitHub Actions annotations
+php artisan filament:doctor --strict        # warnings also fail
+php artisan filament:doctor --no-db         # skip checks that need a database connection
 ```
 
-## The command
-
-```bash
-php artisan filament:doctor                      # every panel, table output
-php artisan filament:doctor --panel=admin        # one panel
-php artisan filament:doctor --format=json        # machine-readable
-php artisan filament:doctor --format=github      # annotations in GitHub Actions
-php artisan filament:doctor --strict             # warnings fail too
-php artisan filament:doctor --no-db              # skip checks that need a database
-```
-
-Exit code is `1` when any error-level finding remains, so it drops straight into CI.
+The exit code is 1 when at least one error-level finding remains.
 
 ```
- ✖ translatable-concern-missing (1) https://github.com/nsumbadze/filament-doctor/blob/main/docs/rules/translatable-concern-missing.md
+ ✖ translatable-concern-missing (1)
    App\Filament\Resources\PaymentProviderResource\Pages\EditPaymentProvider
      Page "edit" of a translatable resource lacks the Translatable concern; forms will show [object Object].
      app/Filament/Resources/PaymentProviderResource/Pages/EditPaymentProvider.php:9
 
- ▲ uncached-navigation-badge (1) https://github.com/nsumbadze/filament-doctor/blob/main/docs/rules/uncached-navigation-badge.md
+ ▲ uncached-navigation-badge (1)
    App\Filament\Resources\OrderResource
      getNavigationBadge() queries the database on every render; wrap it in Cache::remember() or Cache::flexible().
      app/Filament/Resources/OrderResource.php:41
@@ -60,88 +45,111 @@ Exit code is `1` when any error-level finding remains, so it drops straight into
  1 error(s), 1 warning(s)
 ```
 
-### Adopting on an existing project
+### Baseline
 
-Write every current finding to a baseline, fix things over time, and only new findings fail the build:
+An existing project can record its current findings and only fail on new ones:
 
 ```bash
 php artisan filament:doctor --generate-baseline   # writes filament-doctor-baseline.json
-php artisan filament:doctor                       # reports only what is not in the baseline
-php artisan filament:doctor --no-baseline         # everything again
+php artisan filament:doctor                       # findings in the baseline are hidden
+php artisan filament:doctor --no-baseline
 ```
 
-Baseline entries are keyed by rule and subject, not by message, so wording changes between versions do not invalidate them. File-based subjects are relative to the project root, so the baseline is portable between machines and CI.
+Entries are keyed by rule and subject, not by message, and file paths are relative to the project root, so the file works across machines.
 
 ## Rules
 
-| Id | Default | What it catches |
+| Rule | Default | Reports |
 | --- | --- | --- |
-| [translatable-concern-missing](docs/rules/translatable-concern-missing.md) | error | Translatable model, resource or page without the `Translatable` concern |
-| [json-column-searchable](docs/rules/json-column-searchable.md) | error | `searchable()` / `sortable()` on a JSON attribute |
-| [resource-without-policy](docs/rules/resource-without-policy.md) | warning | No policy, or policy without `viewAny()` |
-| [tenant-filter-missing](docs/rules/tenant-filter-missing.md) | error | Tenant panel resource whose model lacks the ownership relationship |
-| [missing-translation-key](docs/rules/missing-translation-key.md) | warning | `__()` keys in resources and pages missing for a configured locale |
-| [permission-name-drift](docs/rules/permission-name-drift.md) | error | Permission strings in policies that the permission store does not know |
+| [translatable-concern-missing](docs/rules/translatable-concern-missing.md) | error | A translatable model whose resource or page does not use the `Translatable` concern |
+| [json-column-searchable](docs/rules/json-column-searchable.md) | error | `searchable()` or `sortable()` on a JSON attribute |
+| [resource-without-policy](docs/rules/resource-without-policy.md) | warning | No policy, or a policy without `viewAny()` |
+| [tenant-filter-missing](docs/rules/tenant-filter-missing.md) | error | A resource on a tenant panel whose model has no ownership relationship |
+| [missing-translation-key](docs/rules/missing-translation-key.md) | warning | Translation keys used in resources and pages that a configured locale does not define |
+| [permission-name-drift](docs/rules/permission-name-drift.md) | error | Permission names checked in policies that do not exist in the permission store |
 | [unbounded-relationship-select](docs/rules/unbounded-relationship-select.md) | warning | `Select::relationship()` without `searchable()` |
-| [uncached-navigation-badge](docs/rules/uncached-navigation-badge.md) | warning | `getNavigationBadge()` querying without a cache |
-| [tenant-in-job](docs/rules/tenant-in-job.md) | error | `Filament::getTenant()` inside jobs, importers, exporters |
-| [import-transient-column](docs/rules/import-transient-column.md) | error | Importer columns that are not model attributes without a `fillRecord()` override |
+| [uncached-navigation-badge](docs/rules/uncached-navigation-badge.md) | warning | `getNavigationBadge()` that queries the database without a cache |
+| [tenant-in-job](docs/rules/tenant-in-job.md) | error | `Filament::getTenant()` inside jobs, importers or exporters |
+| [import-transient-column](docs/rules/import-transient-column.md) | error | Importer columns that are not model attributes while `fillRecord()` is not overridden |
 
-The file-scanning rules (`tenant-in-job`, `permission-name-drift`, `missing-translation-key`) read source line by line and skip comment lines; a mention inside a docblock is not reported. The same finding raised by several panels is reported once.
+Each rule has a page under `docs/rules` describing what it reports and how to fix it.
 
-Change a severity or switch a rule off in the config:
+The file-scanning rules read source line by line and skip comment lines. A finding produced by more than one panel is reported once.
+
+Severities are set per rule in the config file. `off` disables a rule.
 
 ```php
 'rules' => [
     'json-column-searchable' => 'error',
     'uncached-navigation-badge' => 'off',
 ],
+
 'ignore' => [
     App\Filament\Resources\LegacyResource::class,
 ],
 ```
 
-### Writing your own rule
+### Custom rules
 
-Implement `Nsumbadze\Doctor\Contracts\Rule` (or extend `Rules\AbstractRule`) and register it:
+Implement `Nsumbadze\Doctor\Contracts\Rule`, or extend `Nsumbadze\Doctor\Rules\AbstractRule`, and add the class to `extra_rules`. The `Inspector` passed to `check()` provides the panel's resources, their evaluated form and table, model metadata and file scanning helpers.
 
 ```php
-'extra_rules' => [
-    App\Doctor\NoRawHtmlColumnsRule::class,
-],
-```
+use Filament\Panel;
+use Nsumbadze\Doctor\Rules\AbstractRule;
+use Nsumbadze\Doctor\Support\Inspector;
 
-The `Inspector` passed to your rule gives you the panel's resources, their evaluated form and table, model metadata, and helpers for scanning files.
+class NoHtmlColumnsRule extends AbstractRule
+{
+    public function id(): string
+    {
+        return 'no-html-columns';
+    }
+
+    public function description(): string
+    {
+        return 'Table columns rendering unescaped HTML';
+    }
+
+    public function check(Panel $panel, Inspector $inspector): iterable
+    {
+        foreach ($inspector->resources() as $resource) {
+            foreach ($inspector->table($resource)?->getColumns() ?? [] as $column) {
+                if ($column->isHtml()) {
+                    yield $this->finding("{$resource}::{$column->getName()}", 'Column renders raw HTML.', $resource);
+                }
+            }
+        }
+    }
+}
+```
 
 ## PHPStan rules
 
-With `phpstan/extension-installer` the extension is picked up automatically. Otherwise:
+The extension is registered automatically with `phpstan/extension-installer`. Otherwise:
 
 ```neon
 includes:
     - vendor/nsumbadze/filament-doctor/extension.neon
 ```
 
-Static rules shipped today:
-
-- `filamentDoctor.tenantInJob` — `Filament::getTenant()` / `getTenantId()` inside a class that implements `ShouldQueue` or extends `Importer` / `Exporter`.
-- `filamentDoctor.uncachedNavigationBadge` — `getNavigationBadge()` on a resource that queries without `Cache::` / `cache()` / `remember()` / `flexible()`.
-
-The artisan command remains the complete rule set; the PHPStan half covers what can be decided without booting the application.
-
-## Configuration reference
-
-| Key | Purpose |
+| Identifier | Reports |
 | --- | --- |
-| `rules` | severity per rule: `error`, `warning`, `off` |
-| `ignore` | classes never inspected |
-| `paths.jobs` | directories scanned for tenant access (default: `app/Jobs`, `app/Filament/Imports`, `app/Filament/Exports`) |
-| `paths.policies` | directories scanned for permission names |
-| `paths.importers` | directories scanned for importer classes |
-| `locales` | locales each translation key must exist in |
-| `permissions` | `null` (Spatie Permission table when installed), an array, or a callable returning permission names |
-| `baseline` | baseline file path |
-| `extra_rules` | additional rule classes |
+| `filamentDoctor.tenantInJob` | `Filament::getTenant()` or `getTenantId()` in a class that implements `ShouldQueue` or extends `Importer` or `Exporter` |
+| `filamentDoctor.uncachedNavigationBadge` | `getNavigationBadge()` on a resource that queries without `Cache::`, `cache()`, `remember()` or `flexible()` |
+
+## Configuration
+
+| Key | Description |
+| --- | --- |
+| `rules` | Severity per rule: `error`, `warning` or `off` |
+| `ignore` | Classes that are never inspected |
+| `paths.jobs` | Directories scanned for tenant access. Default: `app/Jobs`, `app/Filament/Imports`, `app/Filament/Exports` |
+| `paths.policies` | Directories scanned for permission names |
+| `paths.importers` | Directories scanned for importer classes |
+| `locales` | Locales every translation key must exist in |
+| `permissions` | `null` reads Spatie Permission's table when installed. An array or callable supplies the names directly. |
+| `baseline` | Path of the baseline file |
+| `extra_rules` | Additional rule classes |
 
 ## Testing
 
@@ -151,6 +159,6 @@ composer analyse
 composer format
 ```
 
-## Licence
+## License
 
-MIT.
+MIT. See [LICENSE.md](LICENSE.md).
