@@ -1,0 +1,76 @@
+{
+    "name": "nsumbadze/filament-doctor",
+    "description": "Health checks for Filament panels: an artisan audit command plus PHPStan rules that catch missing policies, JSON searchable columns, tenant leaks, untranslated keys and more before your users do.",
+    "keywords": [
+        "filament",
+        "laravel",
+        "phpstan",
+        "static-analysis",
+        "audit",
+        "lint"
+    ],
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Nika Sumbadze"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "filament/filament": "^4.0",
+        "spatie/laravel-package-tools": "^1.16"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^10.0",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "phpstan/phpstan": "^2.0"
+    },
+    "suggest": {
+        "phpstan/phpstan": "Required for the static rules (the artisan command works without it)."
+    },
+    "autoload": {
+        "psr-4": {
+            "Nsumbadze\\Doctor\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Nsumbadze\\Doctor\\Tests\\": "tests/"
+        },
+        "files": [
+            "tests/Fixtures/Stubs/translatable.php"
+        ],
+        "classmap": [
+            "tests/PHPStan/data"
+        ]
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "analyse": "vendor/bin/phpstan analyse",
+        "format": "vendor/bin/pint"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Nsumbadze\\Doctor\\DoctorServiceProvider"
+            ]
+        },
+        "phpstan": {
+            "includes": [
+                "extension.neon"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
