@@ -86,7 +86,8 @@ it('flags Filament::getTenant() inside jobs', function (): void {
 
     expect($found)->toHaveCount(1)
         ->and($found[0]->file)->toEndWith('SyncCatalogJob.php')
-        ->and($found[0]->line)->toBe(14);
+        ->and($found[0]->line)->toBe(15)
+        ->and($found[0]->subject)->toEndWith('Fixtures/Jobs/SyncCatalogJob.php:15');
 });
 
 it('flags importer columns that are not model attributes', function (): void {

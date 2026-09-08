@@ -11,6 +11,7 @@ class SyncCatalogJob implements ShouldQueue
 {
     public function handle(): void
     {
+        // Filament::getTenant() mentioned in a comment must not count.
         $tenant = Filament::getTenant();
 
         unset($tenant);

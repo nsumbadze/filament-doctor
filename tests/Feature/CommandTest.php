@@ -28,7 +28,7 @@ it('prints json with a summary', function (): void {
 it('prints github annotations', function (): void {
     $this->artisan('filament:doctor', ['--panel' => 'admin', '--format' => 'github'])
         ->expectsOutputToContain('title=translatable-concern-missing')
-        ->expectsOutputToContain('Fixtures/Jobs/SyncCatalogJob.php,line=14,title=tenant-in-job::')
+        ->expectsOutputToContain('Fixtures/Jobs/SyncCatalogJob.php,line=15,title=tenant-in-job::')
         ->assertFailed();
 });
 
