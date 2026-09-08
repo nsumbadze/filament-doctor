@@ -73,7 +73,11 @@ class MissingTranslationKey extends AbstractRule
         $keys = [];
 
         foreach ($lines as $index => $line) {
-            if (! preg_match_all('/\b(?:__|trans|trans_choice)\(\s*([\'"])([^\'"]+)\1/', $line, $matches)) {
+            if ($this->isCommentLine($line)) {
+                continue;
+            }
+
+            if (! preg_match_all('/(?:\b(?:__|trans|trans_choice)|Lang::(?:get|choice))\(\s*([\'"])([^\'"]+)\1/', $line, $matches)) {
                 continue;
             }
 

@@ -26,4 +26,29 @@ abstract class AbstractRule implements Rule
 
         return new Finding($this->id(), Severity::Error, $subject, $message, $file, $line);
     }
+
+    /**
+     * Paths inside subjects must not depend on the machine, or the baseline
+     * would not survive a checkout elsewhere.
+     */
+    protected function relativePath(string $file): string
+    {
+        $base = rtrim(base_path(), '/') . '/';
+
+        return str_starts_with($file, $base) ? substr($file, strlen($base)) : $file;
+    }
+
+    /**
+     * Line-based scanners skip comment lines; a mention inside a docblock is
+     * not a call.
+     */
+    protected function isCommentLine(string $line): bool
+    {
+        $trimmed = ltrim($line);
+
+        return str_starts_with($trimmed, '//')
+            || str_starts_with($trimmed, '#')
+            || str_starts_with($trimmed, '/*')
+            || str_starts_with($trimmed, '*');
+    }
 }

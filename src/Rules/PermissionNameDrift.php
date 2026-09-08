@@ -40,7 +40,7 @@ class PermissionNameDrift extends AbstractRule
                     continue;
                 }
 
-                yield $this->finding("{$file}::{$name}", "Permission \"{$name}\" is checked here but no such permission exists; the check always fails.", null, $line)
+                yield $this->finding($this->relativePath($file) . "::{$name}", "Permission \"{$name}\" is checked here but no such permission exists; the check always fails.", null, $line)
                     ->withFile($file);
             }
         }
@@ -86,6 +86,10 @@ class PermissionNameDrift extends AbstractRule
         $found = [];
 
         foreach ($lines as $index => $line) {
+            if ($this->isCommentLine($line)) {
+                continue;
+            }
+
             if (! preg_match_all('/->(?:can|cannot|hasPermissionTo|checkPermissionTo|hasAnyPermission|hasAllPermissions)\(\s*([\'"])([^\'"]+)\1/', $line, $matches)) {
                 continue;
             }

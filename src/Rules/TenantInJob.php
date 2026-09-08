@@ -32,12 +32,18 @@ class TenantInJob extends AbstractRule
                 continue;
             }
 
+            $subjectFile = $this->relativePath($file);
+
             foreach ($lines as $index => $line) {
+                if ($this->isCommentLine($line)) {
+                    continue;
+                }
+
                 if (! preg_match('/(Filament::getTenant\(|filament\(\)->getTenant\(|Filament::getTenantId\()/', $line)) {
                     continue;
                 }
 
-                yield $this->finding($file . ':' . ($index + 1), 'Filament::getTenant() is null inside queued jobs, importers and exporters; pass the tenant id explicitly (e.g. through action options or the job constructor).', null, $index + 1)
+                yield $this->finding($subjectFile . ':' . ($index + 1), 'Filament::getTenant() is null inside queued jobs, importers and exporters; pass the tenant id explicitly (e.g. through action options or the job constructor).', null, $index + 1)
                     ->withFile($file);
             }
         }
