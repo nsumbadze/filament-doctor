@@ -7,6 +7,7 @@ namespace Nsumbadze\Doctor\Rules;
 use Nsumbadze\Doctor\Contracts\Rule;
 use Nsumbadze\Doctor\Finding;
 use Nsumbadze\Doctor\Severity;
+use Nsumbadze\Doctor\Support\Paths;
 use ReflectionClass;
 
 abstract class AbstractRule implements Rule
@@ -33,9 +34,7 @@ abstract class AbstractRule implements Rule
      */
     protected function relativePath(string $file): string
     {
-        $base = rtrim(base_path(), '/') . '/';
-
-        return str_starts_with($file, $base) ? substr($file, strlen($base)) : $file;
+        return Paths::relative($file);
     }
 
     /**

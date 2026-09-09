@@ -6,6 +6,7 @@ namespace Nsumbadze\Doctor\Reporters;
 
 use Illuminate\Console\OutputStyle;
 use Nsumbadze\Doctor\Severity;
+use Nsumbadze\Doctor\Support\Paths;
 
 /**
  * GitHub Actions workflow commands: one annotation per finding.
@@ -20,28 +21,37 @@ final class GithubReporter implements Reporter
             $properties = [];
 
             if ($finding->file !== null) {
-                $properties[] = 'file=' . $this->relative($finding->file);
+                $properties[] = 'file=' . $this->property(Paths::relative($finding->file));
             }
 
             if ($finding->line !== null) {
                 $properties[] = 'line=' . $finding->line;
             }
 
-            $properties[] = 'title=' . $finding->rule;
+            $properties[] = 'title=' . $this->property($finding->rule);
 
             $output->writeln(sprintf(
                 '::%s %s::%s',
                 $level,
                 implode(',', $properties),
-                str_replace(["\r", "\n"], ['%0D', '%0A'], $finding->subject . ' — ' . $finding->message),
+                $this->data($finding->subject . ' — ' . $finding->message),
             ));
         }
     }
 
-    private function relative(string $file): string
+    /**
+     * Workflow commands reserve %, \r and \n in the message.
+     */
+    private function data(string $value): string
     {
-        $base = rtrim(base_path(), '/') . '/';
+        return str_replace(['%', "\r", "\n"], ['%25', '%0D', '%0A'], $value);
+    }
 
-        return str_starts_with($file, $base) ? substr($file, strlen($base)) : $file;
+    /**
+     * Property values additionally reserve : and , as separators.
+     */
+    private function property(string $value): string
+    {
+        return str_replace([':', ','], ['%3A', '%2C'], $this->data($value));
     }
 }

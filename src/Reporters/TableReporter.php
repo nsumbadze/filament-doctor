@@ -7,6 +7,7 @@ namespace Nsumbadze\Doctor\Reporters;
 use Illuminate\Console\OutputStyle;
 use Nsumbadze\Doctor\Finding;
 use Nsumbadze\Doctor\Severity;
+use Nsumbadze\Doctor\Support\Paths;
 
 final class TableReporter implements Reporter
 {
@@ -42,7 +43,7 @@ final class TableReporter implements Reporter
 
             foreach ($ruleFindings as $finding) {
                 $location = $finding->file !== null
-                    ? '<fg=gray>' . $this->relative($finding->file) . ($finding->line !== null ? ':' . $finding->line : '') . '</>'
+                    ? '<fg=gray>' . Paths::relative($finding->file) . ($finding->line !== null ? ':' . $finding->line : '') . '</>'
                     : '';
 
                 $output->writeln("   {$finding->subject}");
@@ -60,12 +61,5 @@ final class TableReporter implements Reporter
         $warnings = count($findings) - $errors;
 
         $output->writeln(sprintf(' <fg=gray>%d error(s), %d warning(s)</>', $errors, $warnings));
-    }
-
-    private function relative(string $file): string
-    {
-        $base = rtrim(base_path(), '/') . '/';
-
-        return str_starts_with($file, $base) ? substr($file, strlen($base)) : $file;
     }
 }
