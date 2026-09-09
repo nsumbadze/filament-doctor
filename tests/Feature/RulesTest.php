@@ -6,6 +6,7 @@ use Nsumbadze\Doctor\Doctor;
 use Nsumbadze\Doctor\Finding;
 use Nsumbadze\Doctor\Severity;
 use Nsumbadze\Doctor\Tests\Fixtures\Imports\ProductImporter;
+use Nsumbadze\Doctor\Tests\Fixtures\Resources\BrokenResource;
 use Nsumbadze\Doctor\Tests\Fixtures\Resources\NoteResource;
 use Nsumbadze\Doctor\Tests\Fixtures\Resources\PostResource;
 use Nsumbadze\Doctor\Tests\Fixtures\Resources\PostResource\Pages\EditPost;
@@ -127,4 +128,13 @@ it('skips database-backed checks with the database disabled', function (): void 
     expect(findingsFor($findings, 'import-transient-column'))->toBeEmpty()
         // JSON detection still works through the model cast.
         ->and(findingsFor($findings, 'json-column-searchable'))->not->toBeEmpty();
+});
+
+it('reports resources whose form could not be evaluated instead of skipping them silently', function (): void {
+    $found = findingsFor($this->findings, Doctor::INSPECTION_FAILED);
+
+    expect($found)->toHaveCount(1)
+        ->and($found[0]->subject)->toBe(BrokenResource::class . '::form')
+        ->and($found[0]->severity)->toBe(Severity::Warning)
+        ->and($found[0]->message)->toContain('needs an authenticated user');
 });

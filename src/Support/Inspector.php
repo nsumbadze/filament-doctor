@@ -37,6 +37,9 @@ class Inspector
     /** @var array<class-string<Model>, Model> */
     protected array $instances = [];
 
+    /** @var array<int, array{subject: string, message: string}> */
+    protected array $failures = [];
+
     /**
      * @param  array<int, class-string>  $ignored
      */
@@ -120,7 +123,9 @@ class Inspector
             $livewire = new $page;
 
             return $this->forms[$resource] = $resource::form(Schema::make($livewire));
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->failures[] = ['subject' => "{$resource}::form", 'message' => $exception->getMessage()];
+
             return $this->forms[$resource] = null;
         }
     }
@@ -145,7 +150,9 @@ class Inspector
             $livewire = new $listPage;
 
             return $this->tables[$resource] = $resource::table(Table::make($livewire));
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->failures[] = ['subject' => "{$resource}::table", 'message' => $exception->getMessage()];
+
             return $this->tables[$resource] = null;
         }
     }
@@ -280,6 +287,17 @@ class Inspector
      *
      * @param  class-string<Model>  $model
      */
+    /**
+     * Forms and tables that could not be evaluated. Rules depending on them
+     * silently skipped the resource, so the doctor reports these separately.
+     *
+     * @return array<int, array{subject: string, message: string}>
+     */
+    public function failures(): array
+    {
+        return $this->failures;
+    }
+
     public function instance(string $model): Model
     {
         return $this->instances[$model] ??= new $model;

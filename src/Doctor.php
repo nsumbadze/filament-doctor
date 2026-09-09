@@ -29,6 +29,8 @@ class Doctor
     /** @var array<string, true> panel ids booted by this process */
     protected static array $booted = [];
 
+    public const INSPECTION_FAILED = 'inspection-failed';
+
     /** @var array<int, class-string<Rule>> */
     public const RULES = [
         TranslatableConcernMissing::class,
@@ -109,6 +111,17 @@ class Doctor
                         );
                     }
                 }
+
+                $failureSeverity = $this->severityOfId(self::INSPECTION_FAILED);
+
+                foreach ($failureSeverity === Severity::Off ? [] : $inspector->failures() as $failure) {
+                    $findings[] = new Finding(
+                        self::INSPECTION_FAILED,
+                        $failureSeverity,
+                        $failure['subject'],
+                        'Could not be evaluated, so rules depending on it skipped this resource: ' . $failure['message'],
+                    );
+                }
             }
         } finally {
             Filament::setCurrentPanel($previousPanel);
@@ -134,7 +147,12 @@ class Doctor
 
     public function severityOf(Rule $rule): Severity
     {
-        $configured = config("filament-doctor.rules.{$rule->id()}", 'warning');
+        return $this->severityOfId($rule->id());
+    }
+
+    protected function severityOfId(string $ruleId): Severity
+    {
+        $configured = config("filament-doctor.rules.{$ruleId}", 'warning');
 
         return Severity::tryFrom(is_string($configured) ? $configured : 'warning') ?? Severity::Warning;
     }

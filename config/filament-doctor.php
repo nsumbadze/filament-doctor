@@ -24,6 +24,9 @@ return [
         'uncached-navigation-badge' => 'warning',
         'tenant-in-job' => 'error',
         'import-transient-column' => 'error',
+
+        // Raised when a resource's form or table could not be evaluated.
+        'inspection-failed' => 'warning',
     ],
 
     /*

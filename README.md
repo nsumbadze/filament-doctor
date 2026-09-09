@@ -76,6 +76,8 @@ Each rule has a page under `docs/rules` describing what it reports and how to fi
 
 The file-scanning rules read source line by line and skip comment lines. A finding produced by more than one panel is reported once.
 
+When a resource's form or table throws while being evaluated outside a request (for example because it reads `auth()->user()`), the rules that depend on it skip that resource and an `inspection-failed` warning names it, so a clean run means every resource was actually inspected.
+
 Severities are set per rule in the config file. `off` disables a rule.
 
 ```php
@@ -141,7 +143,7 @@ includes:
 
 | Key | Description |
 | --- | --- |
-| `rules` | Severity per rule: `error`, `warning` or `off` |
+| `rules` | Severity per rule: `error`, `warning` or `off`. The pseudo-rule `inspection-failed` covers resources that could not be evaluated. |
 | `ignore` | Classes that are never inspected |
 | `paths.jobs` | Directories scanned for tenant access. Default: `app/Jobs`, `app/Filament/Imports`, `app/Filament/Exports` |
 | `paths.policies` | Directories scanned for permission names |
