@@ -66,8 +66,25 @@ class Inspector
     {
         return array_values(array_filter(
             $this->panel->getResources(),
-            fn (string $resource): bool => ! $this->isIgnored($resource),
+            fn (string $resource): bool => ! $this->isIgnored($resource) && ! $this->isVendor($resource),
         ));
+    }
+
+    /**
+     * Resources shipped by other packages cannot be fixed in this project, so
+     * they are skipped unless `ignore_vendor` is turned off.
+     *
+     * @param  class-string  $class
+     */
+    public function isVendor(string $class): bool
+    {
+        if (! config('filament-doctor.ignore_vendor', true)) {
+            return false;
+        }
+
+        $file = (new ReflectionClass($class))->getFileName();
+
+        return $file !== false && str_starts_with($file, rtrim(base_path('vendor'), '/') . '/');
     }
 
     /**

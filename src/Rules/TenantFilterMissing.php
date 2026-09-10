@@ -31,18 +31,22 @@ class TenantFilterMissing extends AbstractRule
         }
 
         foreach ($inspector->resources() as $resource) {
+            $relationship = $resource::getTenantOwnershipRelationshipName();
+            $model = $inspector->model($resource);
+            $ownsTenantRelationship = method_exists($inspector->instance($model), $relationship);
+
             if (! $resource::isScopedToTenant()) {
-                if (! $inspector->overrides($resource, 'getEloquentQuery')) {
-                    yield $this->finding($resource, 'Resource opted out of tenant scoping and does not override getEloquentQuery(); every tenant sees every record.', $resource);
+                // Shared lookup data (countries, currencies…) has no tenant relationship
+                // and is meant to be visible everywhere. Only a model that does belong
+                // to a tenant but is served unscoped is a leak.
+                if ($ownsTenantRelationship && ! $inspector->overrides($resource, 'getEloquentQuery')) {
+                    yield $this->finding($resource, "Resource opted out of tenant scoping although {$model} has a \"{$relationship}\" relationship, and it does not override getEloquentQuery(); every tenant sees every record.", $resource);
                 }
 
                 continue;
             }
 
-            $relationship = $resource::getTenantOwnershipRelationshipName();
-            $model = $inspector->model($resource);
-
-            if (method_exists($inspector->instance($model), $relationship)) {
+            if ($ownsTenantRelationship) {
                 continue;
             }
 

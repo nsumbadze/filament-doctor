@@ -86,7 +86,8 @@ class MissingTranslationKey extends AbstractRule
                     continue;
                 }
 
-                if (str_contains($key, ' ')) {
+                // Concatenated or interpolated keys ("prefix." . $tab) cannot be checked.
+                if (str_contains($key, ' ') || str_ends_with($key, '.') || str_contains($key, '$') || str_contains($key, '{')) {
                     continue;
                 }
 

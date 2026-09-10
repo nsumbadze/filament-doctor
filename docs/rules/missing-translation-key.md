@@ -12,7 +12,7 @@ The literal key (`validation.custom.sku`) shows up in the UI.
 
 ## How to fix
 
-Add the key to every locale in `config('filament-doctor.locales')`. Keys without a dot or `::` are treated as plain sentences and ignored.
+Add the key to every locale in `config('filament-doctor.locales')`. Keys without a dot or `::` are treated as plain sentences and ignored, as are keys built at runtime by concatenation or interpolation.
 
 ## Turning it off
 

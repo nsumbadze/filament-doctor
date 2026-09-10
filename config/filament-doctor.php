@@ -35,6 +35,11 @@ return [
     'ignore' => [],
 
     /*
+    | Skip resources whose class lives under vendor/ (shipped by other packages).
+    */
+    'ignore_vendor' => true,
+
+    /*
     | Directories scanned by the file-based rules.
     */
     'paths' => [

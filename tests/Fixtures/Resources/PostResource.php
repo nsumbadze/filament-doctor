@@ -29,6 +29,7 @@ class PostResource extends Resource
         return $schema->components([
             TextInput::make('title')->label(__('doctor-fixture.missing_label')),
             TextInput::make('slug')->label(__('filament-panels::pages/dashboard.title')),
+            TextInput::make('tab')->label(__('doctor-fixture.tabs.' . 'all')),
         ]);
     }
 

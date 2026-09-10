@@ -4,7 +4,7 @@ Rule id: `tenant-filter-missing` · Default severity: **error**
 
 ## What it catches
 
-On a panel with tenancy, a resource is scoped to the tenant but its model has no ownership relationship, or the resource opted out of scoping without overriding `getEloquentQuery()`.
+On a panel with tenancy, a resource is scoped to the tenant but its model has no ownership relationship, or the resource opted out of scoping (`$isScopedToTenant = false`) although its model does have the ownership relationship and `getEloquentQuery()` is not overridden. Shared lookup data whose model has no tenant relationship is not reported; opting it out is the intended way to make it visible to every tenant.
 
 ## Why it matters
 

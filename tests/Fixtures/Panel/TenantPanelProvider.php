@@ -7,6 +7,8 @@ namespace Nsumbadze\Doctor\Tests\Fixtures\Panel;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Nsumbadze\Doctor\Tests\Fixtures\Models\Team;
+use Nsumbadze\Doctor\Tests\Fixtures\Resources\CityResource;
+use Nsumbadze\Doctor\Tests\Fixtures\Resources\LeakyResource;
 use Nsumbadze\Doctor\Tests\Fixtures\Resources\ProductResource;
 use Nsumbadze\Doctor\Tests\Fixtures\Resources\TagResource;
 
@@ -22,6 +24,8 @@ class TenantPanelProvider extends PanelProvider
             ->resources([
                 ProductResource::class,
                 TagResource::class,
+                CityResource::class,
+                LeakyResource::class,
             ]);
     }
 }

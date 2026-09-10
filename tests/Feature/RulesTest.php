@@ -7,6 +7,7 @@ use Nsumbadze\Doctor\Finding;
 use Nsumbadze\Doctor\Severity;
 use Nsumbadze\Doctor\Tests\Fixtures\Imports\ProductImporter;
 use Nsumbadze\Doctor\Tests\Fixtures\Resources\BrokenResource;
+use Nsumbadze\Doctor\Tests\Fixtures\Resources\LeakyResource;
 use Nsumbadze\Doctor\Tests\Fixtures\Resources\NoteResource;
 use Nsumbadze\Doctor\Tests\Fixtures\Resources\PostResource;
 use Nsumbadze\Doctor\Tests\Fixtures\Resources\PostResource\Pages\EditPost;
@@ -50,7 +51,17 @@ it('flags a resource whose model lacks the tenant relationship on a tenant panel
 
     $subjects = array_map(fn (Finding $f): string => $f->subject, findingsFor($findings, 'tenant-filter-missing'));
 
-    expect($subjects)->toBe([ProductResource::class]);
+    expect($subjects)->toBe([ProductResource::class, LeakyResource::class]);
+});
+
+it('does not flag shared lookup resources that opted out of tenancy', function (): void {
+    $findings = app(Doctor::class)->run('tenant');
+
+    expect(findingsFor($findings, 'tenant-filter-missing', 'CityResource'))->toBeEmpty();
+});
+
+it('ignores translation keys built at runtime', function (): void {
+    expect(findingsFor($this->findings, 'missing-translation-key', 'doctor-fixture.tabs.'))->toBeEmpty();
 });
 
 it('flags translation keys missing for a locale but not existing framework keys', function (): void {

@@ -64,7 +64,7 @@ Entries are keyed by rule and subject, not by message, and file paths are relati
 | [translatable-concern-missing](docs/rules/translatable-concern-missing.md) | error | A translatable model whose resource or page does not use the `Translatable` concern |
 | [json-column-searchable](docs/rules/json-column-searchable.md) | error | `searchable()` or `sortable()` on a JSON attribute |
 | [resource-without-policy](docs/rules/resource-without-policy.md) | warning | No policy, or a policy without `viewAny()` |
-| [tenant-filter-missing](docs/rules/tenant-filter-missing.md) | error | A resource on a tenant panel whose model has no ownership relationship |
+| [tenant-filter-missing](docs/rules/tenant-filter-missing.md) | error | A tenant-panel resource whose model has no ownership relationship, or one that opted out of scoping although its model belongs to a tenant |
 | [missing-translation-key](docs/rules/missing-translation-key.md) | warning | Translation keys used in resources and pages that a configured locale does not define |
 | [permission-name-drift](docs/rules/permission-name-drift.md) | error | Permission names checked in policies that do not exist in the permission store |
 | [unbounded-relationship-select](docs/rules/unbounded-relationship-select.md) | warning | `Select::relationship()` without `searchable()` |
@@ -145,6 +145,7 @@ includes:
 | --- | --- |
 | `rules` | Severity per rule: `error`, `warning` or `off`. The pseudo-rule `inspection-failed` covers resources that could not be evaluated. |
 | `ignore` | Classes that are never inspected |
+| `ignore_vendor` | Skip resources whose class lives under `vendor/`. On by default. |
 | `paths.jobs` | Directories scanned for tenant access. Default: `app/Jobs`, `app/Filament/Imports`, `app/Filament/Exports` |
 | `paths.policies` | Directories scanned for permission names |
 | `paths.importers` | Directories scanned for importer classes |
